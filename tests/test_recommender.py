@@ -1,61 +1,64 @@
-from src.recommender import Song, UserProfile, Recommender
+from src.recommender import Equipment, UserProfile, Recommender
+
 
 def make_small_recommender() -> Recommender:
-    songs = [
-        Song(
+    items = [
+        Equipment(
             id=1,
-            title="Test Pop Track",
-            artist="Test Artist",
-            genre="pop",
-            mood="happy",
-            energy=0.8,
-            tempo_bpm=120,
-            valence=0.9,
-            danceability=0.8,
-            acousticness=0.2,
+            name="Dumbbells",
+            type="free_weight",
+            muscle_group="full_body",
+            goal="muscle_gain",
+            space="small",
+            price_level="medium",
+            skill_level="beginner",
+            versatility="high",
+            notes="core strength training staple",
         ),
-        Song(
+        Equipment(
             id=2,
-            title="Chill Lofi Loop",
-            artist="Test Artist",
-            genre="lofi",
-            mood="chill",
-            energy=0.4,
-            tempo_bpm=80,
-            valence=0.6,
-            danceability=0.5,
-            acousticness=0.9,
+            name="Treadmill",
+            type="cardio",
+            muscle_group="legs",
+            goal="fat_loss",
+            space="large",
+            price_level="high",
+            skill_level="beginner",
+            versatility="medium",
+            notes="cardio endurance training",
         ),
     ]
-    return Recommender(songs)
+    return Recommender(items)
 
 
-def test_recommend_returns_songs_sorted_by_score():
+def test_recommend_returns_equipment_sorted_by_score():
     user = UserProfile(
-        favorite_genre="pop",
-        favorite_mood="happy",
-        target_energy=0.8,
-        likes_acoustic=False,
+        target_muscle="full_body",
+        fitness_goal="muscle_gain",
+        available_space="medium",
+        budget="medium",
+        skill_level="beginner",
     )
     rec = make_small_recommender()
     results = rec.recommend(user, k=2)
 
     assert len(results) == 2
-    # Starter expectation: the pop, happy, high energy song should score higher
-    assert results[0].genre == "pop"
-    assert results[0].mood == "happy"
+    # Dumbbells (full_body, muscle_gain, small space, medium price) should score higher
+    assert results[0].muscle_group == "full_body"
+    assert results[0].goal == "muscle_gain"
 
 
 def test_explain_recommendation_returns_non_empty_string():
     user = UserProfile(
-        favorite_genre="pop",
-        favorite_mood="happy",
-        target_energy=0.8,
-        likes_acoustic=False,
+        target_muscle="full_body",
+        fitness_goal="muscle_gain",
+        available_space="medium",
+        budget="medium",
+        skill_level="beginner",
     )
     rec = make_small_recommender()
-    song = rec.songs[0]
+    item = rec.equipment[0]
 
-    explanation = rec.explain_recommendation(user, song)
+    explanation = rec.explain_recommendation(user, item)
     assert isinstance(explanation, str)
     assert explanation.strip() != ""

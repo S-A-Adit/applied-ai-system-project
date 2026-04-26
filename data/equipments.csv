@@ -1,0 +1,23 @@
+id,equipment,type,muscle_group,goal,space,price_level,skill_level,versatility,notes
+1,Dumbbells,free_weight,full_body,muscle_gain,small,medium,beginner,high,core strength training staple
+2,Barbell,free_weight,full_body,strength,large,high,intermediate,high,powerlifting compound movements
+3,Kettlebell,free_weight,full_body,fat_loss,small,medium,beginner,high,great for explosive workouts
+4,Resistance Bands,bands,full_body,toning,small,low,beginner,high,portable and beginner friendly
+5,Pull-Up Bar,bodyweight,upper_body,strength,small,low,beginner,medium,doorway installation
+6,Bench Press Bench,bench,chest,muscle_gain,medium,medium,intermediate,medium,used with barbell or dumbbells
+7,Adjustable Bench,bench,full_body,muscle_gain,medium,high,beginner,high,decline/incline versatility
+8,Treadmill,cardio,legs,fat_loss,large,high,beginner,medium,cardio endurance training
+9,Stationary Bike,cardio,legs,fat_loss,medium,medium,beginner,medium,low impact cardio
+10,Jump Rope,cardio,full_body,fat_loss,small,low,beginner,high,cheap high-intensity cardio tool
+11,Cable Machine,weight_machine,full_body,muscle_gain,large,high,intermediate,very_high,gym-grade versatility machine
+12,Smith Machine,weight_machine,full_body,strength,large,high,intermediate,high,safer barbell guidance system
+13,Leg Press Machine,weight_machine,legs,strength,large,high,intermediate,medium,quad focused strength builder
+14,Rowing Machine,cardio,full_body,fat_loss,medium,high,beginner,high,full-body cardio + endurance
+15,Medicine Ball,accessory,full_body,conditioning,small,low,beginner,high,explosive training and core work
+16,Ab Roller,accessory,core,toning,small,low,beginner,medium,intense core strengthening tool
+17,TRX Suspension Trainer,bands,full_body,toning,small,medium,beginner,very_high,bodyweight resistance system
+18,Lat Pulldown Machine,weight_machine,back,muscle_gain,large,high,intermediate,medium,upper back development
+19,Incline Bench,bench,chest,muscle_gain,medium,medium,beginner,medium,chest upper fiber emphasis
+20,Squat Rack,free_weight,legs,strength,large,high,intermediate,high,essential for barbell squats
+21,Foam Roller,accessory,recovery,recovery,small,low,beginner,medium,injury prevention and mobility
+22,Weighted Vest,accessory,full_body,conditioning,small,medium,beginner,high,increases resistance for bodyweight training

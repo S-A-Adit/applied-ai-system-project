@@ -1,108 +1,130 @@
 from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass
 
+SPACE_ORDER = {"small": 1, "medium": 2, "large": 3}
+PRICE_ORDER = {"low": 1, "medium": 2, "high": 3}
+SKILL_ORDER = {"beginner": 1, "intermediate": 2}
+
+
 @dataclass
-class Song:
-    """
-    Represents a song and its attributes.
-    Required by tests/test_recommender.py
-    """
+class Equipment:
     id: int
-    title: str
-    artist: str
-    genre: str
-    mood: str
-    energy: float
-    tempo_bpm: float
-    valence: float
-    danceability: float
-    acousticness: float
+    name: str
+    type: str
+    muscle_group: str
+    goal: str
+    space: str
+    price_level: str
+    skill_level: str
+    versatility: str
+    notes: str
+
 
 @dataclass
 class UserProfile:
-    """
-    Represents a user's taste preferences.
-    Required by tests/test_recommender.py
-    """
-    favorite_genre: str
-    favorite_mood: str
-    target_energy: float
-    likes_acoustic: bool
+    target_muscle: str    # e.g. "full_body", "legs", "chest"
+    fitness_goal: str     # e.g. "muscle_gain", "fat_loss", "strength"
+    available_space: str  # "small", "medium", "large"
+    budget: str           # "low", "medium", "high"
+    skill_level: str      # "beginner", "intermediate"
+
 
 class Recommender:
-    """
-    OOP implementation of the recommendation logic.
-    Required by tests/test_recommender.py
-    """
-    def __init__(self, songs: List[Song]):
-        self.songs = songs
+    def __init__(self, equipment: List[Equipment]):
+        self.equipment = equipment
 
-    def recommend(self, user: UserProfile, k: int = 5) -> List[Song]:
-        # TODO: Implement recommendation logic
-        return self.songs[:k]
+    def recommend(self, user: UserProfile, k: int = 5) -> List[Equipment]:
+        user_dict = {
+            "muscle_group": user.target_muscle,
+            "goal": user.fitness_goal,
+            "space": user.available_space,
+            "budget": user.budget,
+            "skill_level": user.skill_level,
+        }
+        scored = []
+        for item in self.equipment:
+            item_dict = {
+                "muscle_group": item.muscle_group,
+                "goal": item.goal,
+                "space": item.space,
+                "price_level": item.price_level,
+                "skill_level": item.skill_level,
+            }
+            scored.append((item, score_equipment(user_dict, item_dict)))
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return [item for item, _ in scored[:k]]
 
-    def explain_recommendation(self, user: UserProfile, song: Song) -> str:
-        # TODO: Implement explanation logic
-        return "Explanation placeholder"
+    def explain_recommendation(self, user: UserProfile, item: Equipment) -> str:
+        parts = []
+        if item.muscle_group == user.target_muscle:
+            parts.append(f"targets {item.muscle_group}")
+        if item.goal == user.fitness_goal:
+            parts.append(f"matches goal={item.goal}")
+        if SPACE_ORDER.get(user.available_space, 0) >= SPACE_ORDER.get(item.space, 0):
+            parts.append(f"fits your {user.available_space} space")
+        if PRICE_ORDER.get(user.budget, 0) >= PRICE_ORDER.get(item.price_level, 0):
+            parts.append(f"within {user.budget} budget")
+        if SKILL_ORDER.get(user.skill_level, 0) >= SKILL_ORDER.get(item.skill_level, 0):
+            parts.append(f"suitable for {user.skill_level} level")
+        return "; ".join(parts) if parts else "partial match"
 
-def load_songs(csv_path: str) -> List[Dict]:
-    """Read a CSV of songs and return a list of dicts with numeric fields cast to float/int."""
+
+def load_equipment(csv_path: str) -> List[Dict]:
+    """Read equipments.csv and return a list of dicts."""
     import csv
-    songs = []
+    items = []
     with open(csv_path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
             row["id"] = int(row["id"])
-            row["energy"] = float(row["energy"])
-            row["tempo_bpm"] = float(row["tempo_bpm"])
-            row["valence"] = float(row["valence"])
-            row["danceability"] = float(row["danceability"])
-            row["acousticness"] = float(row["acousticness"])
-            songs.append(row)
-    print(f"Loaded songs: {len(songs)}")
-    return songs
+            items.append(row)
+    print(f"Loaded equipment: {len(items)}")
+    return items
 
-def score_song(user_prefs: Dict, song: Dict) -> float:
-    """Score one song 0–5.0: +1.0 genre match, +1.5 mood match, +2.0 energy proximity, +0.5 acousticness fit.
-    Experiment — energy-first: genre weight halved (2.0 → 1.0), energy multiplier doubled (1.0 → 2.0).
-    Max possible score: 1.0 + 1.5 + 2.0 + 0.5 = 5.0
+
+def score_equipment(user_prefs: Dict, item: Dict) -> float:
+    """Score one equipment item 0–6.0.
+    +2.0 muscle_group match, +1.5 goal match, +1.0 space fit,
+    +1.0 budget fit, +0.5 skill fit. Max = 6.0.
     """
     score = 0.0
 
-    # genre match weight: 1.0 (halved — experiment: energy-first)
-    if song.get("genre") == user_prefs.get("genre"):
-        score += 1.0
+    if item.get("muscle_group") == user_prefs.get("muscle_group"):
+        score += 2.0
 
-    # mood match weight: 1.5 (unchanged)
-    if song.get("mood") == user_prefs.get("mood"):
+    if item.get("goal") == user_prefs.get("goal"):
         score += 1.5
 
-    # energy proximity weight: 2.0 * (1.0 - distance), max +2.0 (doubled — experiment: energy-first)
-    if "energy" in user_prefs:
-        score += 2.0 * (1.0 - abs(song["energy"] - user_prefs["energy"]))
+    if user_prefs.get("space") and item.get("space"):
+        if SPACE_ORDER.get(user_prefs["space"], 0) >= SPACE_ORDER.get(item["space"], 0):
+            score += 1.0
 
-    # acousticness fit weight: multiplied by 0.5, max +0.5 (unchanged)
-    if "likes_acoustic" in user_prefs:
-        if user_prefs["likes_acoustic"]:
-            score += song["acousticness"] * 0.5
-        else:
-            score += (1.0 - song["acousticness"]) * 0.5
+    if user_prefs.get("budget") and item.get("price_level"):
+        if PRICE_ORDER.get(user_prefs["budget"], 0) >= PRICE_ORDER.get(item["price_level"], 0):
+            score += 1.0
+
+    if user_prefs.get("skill_level") and item.get("skill_level"):
+        if SKILL_ORDER.get(user_prefs["skill_level"], 0) >= SKILL_ORDER.get(item["skill_level"], 0):
+            score += 0.5
 
     return score
 
 
-def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tuple[Dict, float, str]]:
-    """Score every song, sort descending, and return the top-k as (song, score, explanation) tuples."""
+def recommend_equipment(user_prefs: Dict, items: List[Dict], k: int = 5) -> List[Tuple[Dict, float, str]]:
+    """Score every item, sort descending, return top-k as (item, score, explanation) tuples."""
     scored = []
-    for song in songs:
-        s = score_song(user_prefs, song)
+    for item in items:
+        s = score_equipment(user_prefs, item)
         matches = []
-        if song.get("genre") == user_prefs.get("genre"):
-            matches.append(f"genre={song['genre']}")
-        if song.get("mood") == user_prefs.get("mood"):
-            matches.append(f"mood={song['mood']}")
-        matches.append(f"energy={song['energy']} vs target={user_prefs.get('energy', '?')}")
-        explanation = "Matches: " + ", ".join(matches)
-        scored.append((song, s, explanation))
+        if item.get("muscle_group") == user_prefs.get("muscle_group"):
+            matches.append(f"muscle_group={item['muscle_group']}")
+        if item.get("goal") == user_prefs.get("goal"):
+            matches.append(f"goal={item['goal']}")
+        if SPACE_ORDER.get(user_prefs.get("space", ""), 0) >= SPACE_ORDER.get(item.get("space", ""), 0):
+            matches.append(f"fits space={item['space']}")
+        if PRICE_ORDER.get(user_prefs.get("budget", ""), 0) >= PRICE_ORDER.get(item.get("price_level", ""), 0):
+            matches.append(f"within budget={item['price_level']}")
+        explanation = "Matches: " + ", ".join(matches) if matches else "Partial match"
+        scored.append((item, s, explanation))
     scored.sort(key=lambda x: x[1], reverse=True)
     return scored[:k]
