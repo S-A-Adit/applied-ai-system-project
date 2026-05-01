@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(python -m pytest tests/ -v)",
-      "PowerShell(Rename-Item \"f:\\\\Projects\\\\CodePath\\\\A110\\\\applied-ai-system-project\\\\ai110-module3show-musicrecommendersimulation-starter\" \"music_recommender_original\")"
-    ]
-  }
-}
