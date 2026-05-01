@@ -3,11 +3,22 @@
 ## 📌 Original Project (Modules 1–3)
 **Original Project Name:** Music Recommender Simulation
 
-This project is a direct extension of the **Music Recommender Simulation** built in Modules 1–3. That system is being extended here to incorporate AI-driven, retrieval-augmented generation (RAG) capabilities in place of its original rule-based scoring logic.
+This project is a direct extension of the **Music Recommender Simulation** built in Modules 1–3. The original source code is preserved in [`music_recommender_original/`](music_recommender_original/) for reference. That system is being extended here to incorporate AI-driven, retrieval-augmented generation (RAG) capabilities in place of its original rule-based scoring logic.
 
 The original system was a content-based music recommender that scored songs from a small catalog against a user's declared taste profile. Its goal was to surface the most relevant songs by computing a weighted match score across four dimensions — genre match (weight 2.0), mood match (1.5), energy proximity (1.0), and acousticness fit (0.5) — for a maximum possible score of 5.0. The top-k highest-scoring songs were returned alongside plain-language explanations of why each ranked where it did.
 
 User input came from a `UserProfile` with four fields: `favorite_genre`, `favorite_mood`, `target_energy` (a 0.0–1.0 continuous value), and `likes_acoustic` (a boolean). The system had no memory between sessions, no learning from skips or replays, and treated every preference as fixed. Its main limitations — genre over-weighting, a binary acoustic preference, and a catalog too small to surface meaningful mood diversity — motivated the AI-powered extension in this project.
+
+### What Changed From the Original
+
+| Dimension | Music Recommender (Modules 1–3) | Gym Equipment Recommender (this project) |
+|---|---|---|
+| **Catalog** | 18 songs (`songs.csv` with genre, mood, energy, acousticness) | 22 equipment items (`equipments.csv` with muscle_group, goal, space, budget, skill) |
+| **User input** | `UserProfile`: genre, mood, energy (float), acoustic (bool) | Preferences: muscle_group, goal, space, budget, skill_level |
+| **Scoring weights** | genre×2.0, mood×1.5, energy×1.0, acoustic×0.5 | muscle_group×2.0, goal×1.5, space×1.0, budget×0.5, skill×0.5 |
+| **RAG layer** | None — rule-based only | Added: Gemini parses free-text query → scorer retrieves → Gemini explains |
+| **Guardrails** | None | Added: input allowlist validation + hallucination detection on output |
+| **Domain** | Music taste → song recommendations | Fitness needs → gym equipment recommendations |
 
 ---
 
@@ -156,95 +167,88 @@ pytest
 
 ## 🖥️ Sample Input / Output
 
-![Demo GIF](https://imgur.com/a/ttrVN7v)
-
-
 ### Mode 1 — Classic (rule-based)
 
 ```
 Choose mode: 1
 
-Available genres : pop, lofi, rock, ambient, jazz, ...
-Available moods  : happy, chill, intense, relaxed, focused, ...
-
-Favorite genre: lofi
-Favorite mood : chill
-Target energy (0.0–1.0): 0.4
-Prefer acoustic sound? (y/n): y
+Muscle group (back/chest/core/full_body/legs/recovery/upper_body): legs
+Fitness goal (endurance/fat_loss/flexibility/muscle_gain/strength): strength
+Available space (small/medium/large): small
+Budget (low/medium/high): low
+Skill level (beginner/intermediate): beginner
 
 Top recommendations (rule-based):
 
-  Library Rain by Paper Lanterns  —  Score: 4.81
-  Matches: genre=lofi, mood=chill, energy=0.35 vs target=0.4
+  1. Resistance Bands  —  Score: 5.50
+     Matches: muscle_group=legs, goal=strength, space=small, budget=low, skill=beginner
 
-  Midnight Coding by LoRoom  —  Score: 4.58
-  Matches: genre=lofi, mood=chill, energy=0.42 vs target=0.4
+  2. Jump Rope  —  Score: 3.50
+     Matches: muscle_group=legs, space=small, budget=low, skill=beginner
 
-  Focus Flow by LoRoom  —  Score: 3.70
-  Matches: genre=lofi, energy=0.40 vs target=0.4
+  3. Pull-Up Bar  —  Score: 3.00
+     Matches: space=small, budget=low, skill=beginner
 ```
 
 ---
 
 ### Mode 2 — RAG (AI-powered)
 
-**Example 1 — Study music**
+**Example 1 — Leg strength at home on a budget**
 ```
-What kind of music are you looking for? something calm to study to
+What are your fitness needs? I want to build leg strength at home on a tight budget
 
-Step 1: Parsing your request...
-         → genre=lofi, mood=focused, energy=0.3, acoustic=True
-Step 2: Retrieving best matches...
-         → Library Rain (score=4.56)
-         → Focus Flow (score=4.20)
-         → Moonlit Sonata (score=3.95)
+Step 1: Parsing request...
+  Extracted: muscle_group=legs, goal=strength, space=small, budget=low, skill=beginner
+
+Step 2: Retrieving matches...
+  → Resistance Bands (score=5.50)
+  → Jump Rope (score=3.50)
+  → Pull-Up Bar (score=3.00)
+
 Step 3: Generating recommendation...
 
 --- Recommendation ---
-For studying, I'd start with Library Rain by Paper Lanterns. It's a lofi track
-with low energy (0.35) and high acousticness (0.86), perfect for keeping you
-calm and focused without distraction. Focus Flow by LoRoom is another solid
-pick — it's tagged "focused" and sits at almost exactly your target energy.
+For building leg strength at home on a tight budget, Resistance Bands are your
+best bet — they target legs directly, support strength training, fit in any
+small space, and cost very little. Jump Rope is a solid second for adding
+cardio and lower-body endurance to your routine. Pull-Up Bar rounds out the
+top three as a versatile, compact option that also engages your core.
 ----------------------
 ```
 
-**Example 2 — Workout music**
+**Example 2 — Full body workout, no equipment experience**
 ```
-What kind of music are you looking for? high energy workout banger
+What are your fitness needs? full body workout for a complete beginner with medium budget
 
-Step 1: Parsing your request...
-         → genre=any, mood=intense, energy=0.9, acoustic=False
-Step 2: Retrieving best matches...
-         → Iron Curtain (score=4.45)
-         → Signal Drop (score=4.38)
-         → Gym Hero (score=4.21)
+Step 1: Parsing request...
+  Extracted: muscle_group=full_body, goal=muscle_gain, space=medium, budget=medium, skill=beginner
+
+Step 2: Retrieving matches...
+  → Adjustable Dumbbells (score=5.00)
+  → Kettlebell (score=4.50)
+  → Stability Ball (score=3.50)
+
 Step 3: Generating recommendation...
 
 --- Recommendation ---
-Iron Curtain by Savage Null is your top pick — metal genre, angry/intense mood,
-and a crushing energy of 0.97. If you want something slightly more danceable,
-Signal Drop (EDM, energy 0.96) or Gym Hero (pop, energy 0.93) keep the
-intensity high with a more upbeat feel.
+Adjustable Dumbbells are the top pick for a beginner full-body routine with a
+medium budget — they cover every major muscle group, scale with your strength
+as you progress, and don't require much floor space. A Kettlebell is a great
+complement for functional movements like swings and goblet squats. A Stability
+Ball adds core engagement to almost any exercise and is inexpensive.
 ----------------------
 ```
 
-**Example 3 — Late night drive**
+**Example 3 — Input guardrail triggered**
 ```
-What kind of music are you looking for? moody late night drive vibes
+What are your fitness needs? something for my arms
 
-Step 1: Parsing your request...
-         → genre=synthwave, mood=moody, energy=0.7, acoustic=False
-Step 2: Retrieving best matches...
-         → Night Drive Loop (score=4.75)
-         → Concrete Jungle (score=3.12)
-         → Signal Drop (score=2.98)
-Step 3: Generating recommendation...
-
---- Recommendation ---
-Night Drive Loop by Neon Echo is a perfect match — it's synthwave, tagged
-"moody", with energy at 0.75 and a synthetic sound (acousticness 0.22) that
-fits exactly what you described. It's the clear top pick here.
-----------------------
+Step 1: Parsing request...
+  [INPUT GUARDRAIL] 'arms' is not a recognized muscle_group.
+  Valid options: ['back', 'chest', 'core', 'full_body', 'legs', 'recovery', 'upper_body'].
+  Resetting to default.
+  Extracted: muscle_group=any, goal=any, space=medium, budget=medium, skill=beginner
 ```
 
 ---
